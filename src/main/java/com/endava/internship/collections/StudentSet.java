@@ -1,14 +1,10 @@
 package com.endava.internship.collections;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public class StudentSet implements Set<Student> {
     private Node root;
     private int size = 0;
-
 
     @Override
     public int size() {
@@ -17,21 +13,22 @@ public class StudentSet implements Set<Student> {
 
     @Override
     public boolean isEmpty() {
-        return size == 0 ? true : false;
+        return size == 0;
     }
 
     @Override
     public boolean contains(Object o) {
-        if (!(o instanceof Student)) return false;
-        return containsHelper(root, new Node((Student) o));
+        if (o instanceof Student) {
+            return containsHelper(root, new Node((Student) o));
+        } else return false;
     }
 
     private boolean containsHelper(Node current, Node value) {
-        if (current == null) {
+        if (Objects.isNull(current)) {
             return false;
         }
 
-        int toCompare = current.compareTo(value);
+        final int toCompare = current.compareTo(value);
 
         if (toCompare == 0) {
             return true;
@@ -39,48 +36,30 @@ public class StudentSet implements Set<Student> {
 
         if (toCompare > 0) {
             return containsHelper(current.getLeft(), value);
-        } else return containsHelper(current.getRight(), value);
+        } else {
+            return containsHelper(current.getRight(), value);
+        }
     }
 
     @Override
     public Iterator<Student> iterator() {
-        return new Iterator<Student>() {
-            final TreeIterator iterator = new TreeIterator(root);
-            Node lastReturned = null;
-
-            @Override
-            public boolean hasNext() {
-                return iterator.hasNext();
-            }
-
-            @Override
-            public Student next() {
-                lastReturned = iterator.next();
-                return lastReturned.getStudent();
-            }
-
-            @Override
-            public void remove() {
-                if (lastReturned == null) {
-                    throw new NullPointerException("Cannot remove before calling next");
-                }
-                StudentSet.this.remove(lastReturned.getStudent());
-                lastReturned = null;
-            }
-        };
+        return new StudentIterator(root);
     }
 
     @Override
     public Object[] toArray() {
-        Object[] arrayFromSet = new Object[size];
+        final Object[] arrayFromSet = new Object[size];
 
         int count = 0;
-
-        for (Object node : root) {
-            arrayFromSet[count] = node;
-            count++;
+        if (root != null) {
+            for (Object node : root) {
+                arrayFromSet[count] = node;
+                count++;
+            }
+            return arrayFromSet;
+        } else {
+            throw new NullPointerException();
         }
-        return arrayFromSet;
     }
 
     @SuppressWarnings("unchecked")
@@ -226,19 +205,25 @@ public class StudentSet implements Set<Student> {
 
     @Override
     public boolean addAll(Collection<? extends Student> collection) {
-        boolean modified = false;
+        boolean isAdded = false;
         for (Student student : collection) {
-            modified |= add(student);
+            isAdded = add(student);
+            if (!isAdded) {
+                return false;
+            }
         }
-        return modified;
+        return isAdded;
     }
 
     @Override
     public boolean containsAll(Collection<?> collection) {
         for (Object element : collection) {
-            if (!(element instanceof Student)) throw new ClassCastException();
-            if (!contains(element)) {
-                return false;
+            if (element instanceof Student) {
+                if (!contains(element)) {
+                    return false;
+                }
+            } else {
+                throw new IllegalArgumentException();
             }
         }
         return true;
@@ -270,6 +255,35 @@ public class StudentSet implements Set<Student> {
             }
         }
         return modified;
+    }
+
+    public class StudentIterator implements Iterator<Student> {
+        private final TreeIterator iterator;
+        private Node lastReturned = null;
+
+        public StudentIterator(Node root) {
+            this.iterator = new TreeIterator(root);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        @Override
+        public Student next() {
+            lastReturned = iterator.next();
+            return lastReturned.getStudent();
+        }
+
+        @Override
+        public void remove() {
+            if (lastReturned == null) {
+                throw new IllegalArgumentException("Cannot remove before calling next");
+            }
+            StudentSet.this.remove(lastReturned.getStudent());
+            lastReturned = null;
+        }
     }
 
 }
